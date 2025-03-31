@@ -25,6 +25,7 @@
 import json
 import os
 import sys
+import shutil
 
 import numpy as np
 
@@ -54,7 +55,9 @@ def get_struc_seq(
         seq_dict: A dict of structural seqs. The keys are chain IDs. The values are tuples of
         (seq, struc_seq, combined_seq).
     """
-    assert os.path.exists(foldseek), f"Foldseek not found: {foldseek}"
+    if not os.path.exists(foldseek):
+        foldseek = shutil.which("foldseek")
+        assert foldseek is not None, "Foldseek not found in PATH or at the specified location."
     assert os.path.exists(path), f"Pdb file not found: {path}"
     assert plddt_path is None or os.path.exists(plddt_path), (
         f"Plddt file not found: {plddt_path}"

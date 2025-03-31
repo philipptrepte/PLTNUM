@@ -28,16 +28,23 @@ def parse_args():
         default="./data",
         help="Output directory.",
     )
+    parser.add_argument(
+        "--chain",
+        type=str,
+        default="A",
+        help="Chain ID to extract from PDB files. Default is 'A'.",
+    )
     return parser.parse_args()
 
 
-def get_foldseek_seq(pdb_path):
+def get_foldseek_seq(args):
+    pdb_path, chain = args
     parsed_seqs = get_struc_seq(
         "bin/foldseek",
         pdb_path,
-        ["A"],
+        chain,
         process_id=random.randint(0, 10000000),
-    )["A"]
+    )[chain]
     return parsed_seqs
 
 
@@ -45,9 +52,12 @@ if __name__ == "__main__":
     config = parse_args()
 
     pdb_files = glob.glob(os.path.join(config.pdb_dir, "*.pdb"))
+    chains = [config.chain] * len(pdb_files)
+
+    args = list(zip(pdb_files, chains))
 
     with mp.Pool(config.num_processes) as pool:
-        output = pool.map(get_foldseek_seq, pdb_files)
+        output = pool.map(get_foldseek_seq, args)
 
     aa, foldseek, aa_foldseek = zip(*output)
 

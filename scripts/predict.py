@@ -13,6 +13,7 @@ sys.path.append(".")
 from datasets import PLTNUMDataset
 from models import PLTNUM
 from utils import seed_everything
+from tqdm import tqdm
 
 
 def parse_args():
@@ -106,7 +107,7 @@ def predict_fn(dataloader, model, cfg):
     model.eval()
     predictions = []
 
-    for inputs, _ in dataloader:
+    for inputs, _ in tqdm(dataloader, desc="Predicting", unit="batch"):
         inputs = inputs.to(cfg.device)
         with torch.no_grad():
             # Use the correct device type for autocast
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     print(f"torch.backends.mps.is_available(): {torch.backends.mps.is_available()}")
     config.device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
     print("Using device:", config.device)
-    exit()
+    
     config.token_length = 2 if config.architecture == "SaProt" else 1
 
     if not os.path.exists(config.output_dir):
