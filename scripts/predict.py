@@ -109,7 +109,10 @@ def predict_fn(dataloader, model, cfg):
     for inputs, _ in dataloader:
         inputs = inputs.to(cfg.device)
         with torch.no_grad():
-            with torch.amp.autocast(cfg.device, enabled=cfg.use_amp):
+            # Use the correct device type for autocast
+            device_type = "mps" if cfg.device == "mps" else "cuda" if cfg.device == "cuda" else "cpu"
+            # Use autocast for mixed precision
+            with torch.amp.autocast(device_type=device_type, enabled=cfg.use_amp):
                 preds = (
                     torch.sigmoid(model(inputs))
                     if cfg.task == "classification"
@@ -141,15 +144,21 @@ def predict(folds, model_path, cfg):
     folds["raw prediction values"] = predictions
     if cfg.task == "classification":
         folds["binary prediction values"] = [1 if x > 0.5 else 0 for x in predictions]
-    torch.cuda.empty_cache()
+    if config.device == "cuda":
+        torch.cuda.empty_cache()
+    elif config.device == "mps":
+        torch.mps.empty_cache()
     gc.collect()
     return folds
 
 
 if __name__ == "__main__":
     config = parse_args()
+    print(f"torch.backends.mps.is_available(): {torch.backends.mps.is_available()}")
+    config.device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
+    print("Using device:", config.device)
+    exit()
     config.token_length = 2 if config.architecture == "SaProt" else 1
-    config.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not os.path.exists(config.output_dir):
         os.makedirs(config.output_dir)
