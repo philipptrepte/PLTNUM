@@ -29,6 +29,12 @@ def parse_args():
         help="Output directory.",
     )
     parser.add_argument(
+        "--output_file",
+        type=str,
+        default="foldseek_result.csv",
+        help="Output file name.",
+    )
+    parser.add_argument(
         "--chain",
         type=str,
         default="A",
@@ -51,7 +57,7 @@ def get_foldseek_seq(args):
 if __name__ == "__main__":
     config = parse_args()
 
-    pdb_files = glob.glob(os.path.join(config.pdb_dir, "*.pdb"))
+    pdb_files = glob.glob(os.path.join(config.pdb_dir, "**", "*.pdb"), recursive=True)
     chains = [config.chain] * len(pdb_files)
 
     args = list(zip(pdb_files, chains))
@@ -69,4 +75,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(result)
 
-    df.to_csv(os.path.join(config.output_dir, "foldseek_result.csv"), index=False)
+    df.to_csv(os.path.join(config.output_dir, config.output_file), index=False)
